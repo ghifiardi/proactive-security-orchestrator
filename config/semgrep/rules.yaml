@@ -1,0 +1,47 @@
+# Semgrep Configuration for Proactive Security Orchestrator
+
+# Semgrep registry rules (security-focused)
+rules:
+  # OWASP Top Ten
+  - id: p/owasp-top-ten
+
+  # CWE Top 25
+  - id: p/cwe-top-25
+
+  # Language-specific security rules
+  - id: p/python-security
+  - id: p/javascript-security
+  - id: p/java-security
+  - id: p/go-security
+
+  # General security patterns
+  - id: p/security-audit
+
+  # Additional checks
+  - id: p/jwt
+  - id: p/hardcoded-secret
+
+# Paths to exclude
+exclude:
+  - .git
+  - node_modules
+  - venv
+  - .venv
+  - __pycache__
+  - .pytest_cache
+  - dist
+  - build
+  - *.min.js
+  - *.min.css
+  - vendor
+  - target
+  - .gradle
+  - .idea
+  - .vscode
+
+# Timeout settings
+timeout: 30
+
+# Maximum lines per finding
+max-lines-per-finding: 5
+

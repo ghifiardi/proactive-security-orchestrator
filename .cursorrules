@@ -1,0 +1,87 @@
+# === SPEC-FIRST WORKFLOW GUARDRAILS ===
+# Proactive Codebase Testing: Semgrep + Gitleaks Integration Orchestrator
+
+You MUST follow this sequence: Research → Plan → Implement.
+Do NOT write code before a reviewed plan exists.
+
+## ARTIFACT RULES
+
+- In Research phase: write ONLY to .agents/research.md using the exact format below.
+- In Plan phase: write ONLY to .agents/plan.md using the exact format below.
+- In Implement phase: change code per plan.md, then append ≤20 lines to .agents/progress.md.
+
+## FORMATS (STRICT)
+
+### research.md
+
+# Scope
+- Target change/bug/feature:
+- Components/Services (Semgrep, Gitleaks, Orchestrator):
+
+# Peta File & Simbol (path + [Lx-Ly] + 1-line role)
+
+# Alur Eksekusi end-to-end (linked to lines)
+
+# Tes & Observabilitas (tests, log, how-to-run)
+
+# Risiko & Asumsi
+
+# Bukti (3--5 mini snippets only)
+
+### plan.md
+
+# Goal & Non-Goals
+
+# Perubahan per File
+
+- file: path/to/file.ext
+- Lokasi: [Lxxx-Lyyy]
+- Perubahan: (bullet concrete)
+- Mengapa: (link to research)
+- Dampak: (tests/other files)
+
+# Urutan Eksekusi (Step 1..n + "uji cepat" per step)
+
+# Acceptance Criteria (incl. edge-cases)
+
+# Rollback & Guardrails (feature flag/circuit breaker)
+
+# Risiko Sisa & Mitigasi
+
+### progress.md (each step)
+
+# Langkah N -- Ringkasan
+
+- File diubah:
+- Inti perubahan (≤5 bullets):
+- Hasil uji cepat:
+- Dampak ke Langkah berikutnya:
+- Catatan risiko/temuan:
+
+## CONTEXT HYGIENE
+
+- Keep active context ≤40% of window.
+- Prefer path + [Lx-Ly] references over pasting long code.
+- If uncertain, STOP and refine research.md or plan.md (Directed Restart).
+
+## CHILD AGENTS
+
+Parent/orchestrator must instruct children to respond in JSON matching
+contracts/child_agent_schema.json.
+
+Children must NOT paste long code, only evidence pointers (path +
+lines + why_relevant).
+
+## PULL REQUESTS
+
+Use .github/PULL_REQUEST_TEMPLATE.md and link specific sections of
+research.md/plan.md.
+
+## SEMGREP & GITLEAKS SPECIFIC RULES
+
+- All security scanning orchestration must route through SecurityScanner parent
+- Semgrep configuration (rules, exclusions) must live in config/semgrep/
+- Gitleaks configuration must live in config/gitleaks/
+- Output formats: JSON (for parsing), SARIF (for GitHub integration), HTML (for reports)
+- Tool outputs MUST be validated before merging into results
+- All child agents calling semgrep/gitleaks MUST use JSON schema validation

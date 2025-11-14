@@ -1,0 +1,46 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+
+# Virtual environments
+venv
+env
+.venv
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# Testing
+.pytest_cache
+.coverage
+htmlcov
+.tox
+
+# Output files
+*.json
+*.sarif
+*.html
+
+# Documentation
+docs
+*.md
+!README.md
+
+# Workflow artifacts
+.agents
+.github
+

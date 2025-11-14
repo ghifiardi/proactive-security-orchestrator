@@ -1,0 +1,37 @@
+# Gitleaks Ignore Patterns
+# Patterns to exclude from secret detection (false positives)
+
+# Test credentials (commonly used in test files)
+password123
+test_password
+api_key_test
+test_api_key
+secret_key_test
+test_secret_key
+dummy_api_key
+fake_credential
+
+# GitHub Actions token placeholders
+GITHUB_TOKEN
+${{ secrets.GITHUB_TOKEN }}
+GITHUB_SECRET
+
+# Example configurations (safe to ignore)
+example_api_key: "abc123"
+example_secret: "test_secret"
+example_password: "password"
+
+# Development/test environment variables
+DEV_API_KEY
+TEST_SECRET
+LOCAL_SECRET
+SANDBOX_KEY
+
+# Common false positive patterns
+AKIA[0-9A-Z]{16}  # AWS access key pattern (but often used in examples)
+ghp_[a-zA-Z0-9]{36}  # GitHub personal access token pattern (examples)
+
+# Comment patterns (not real secrets)
+# API_KEY=your_key_here
+# SECRET=replace_with_real_secret
+
