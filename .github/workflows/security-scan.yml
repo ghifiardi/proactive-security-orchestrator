@@ -1,6 +1,13 @@
 name: Security Scan
 
 on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: "Path inside the caller repository to scan"
+        required: false
+        type: string
+        default: "."
   pull_request:
     branches: [ main, develop ]
   push:
@@ -15,12 +22,22 @@ jobs:
   security-scan:
     runs-on: ubuntu-latest
     name: Run Security Scanner
+    env:
+      WORKDIR: ${{ inputs.working-directory || '.' }}
 
     steps:
-      - name: Checkout code
+      - name: Checkout target repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Full history for gitleaks
+
+      - name: Checkout orchestrator source
+        if: github.repository != 'ghifiardi/proactive-security-orchestrator'
+        uses: actions/checkout@v4
+        with:
+          repository: ghifiardi/proactive-security-orchestrator
+          ref: main
+          path: orchestrator-src
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -37,14 +54,27 @@ jobs:
           tar -xz -C /usr/local/bin
           chmod +x /usr/local/bin/gitleaks
 
-      - name: Install dependencies
+      - name: Determine orchestrator config path
         run: |
-          pip install -r requirements.txt
-          pip install -e .
+          if [ "${{ github.repository }}" = "ghifiardi/proactive-security-orchestrator" ]; then
+            echo "CONFIG_PATH=${GITHUB_WORKSPACE}/config" >> $GITHUB_ENV
+          else
+            echo "CONFIG_PATH=${GITHUB_WORKSPACE}/orchestrator-src/config" >> $GITHUB_ENV
+          fi
+
+      - name: Install orchestrator CLI
+        run: |
+          if [ "${{ github.repository }}" = "ghifiardi/proactive-security-orchestrator" ]; then
+            pip install -r requirements.txt
+            pip install -e .
+          else
+            pip install git+https://github.com/ghifiardi/proactive-security-orchestrator.git@main
+          fi
 
       - name: Run security scan
+        working-directory: ${{ env.WORKDIR }}
         run: |
-          python -m src.cli scan . --format sarif --output findings.sarif || true
+          security-scan scan . --format sarif --output findings.sarif --config "$CONFIG_PATH" || true
 
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
@@ -62,6 +92,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     name: Run Tests
+    if: github.repository == 'ghifiardi/proactive-security-orchestrator'
 
     steps:
       - name: Checkout code
