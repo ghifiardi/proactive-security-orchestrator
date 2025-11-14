@@ -110,7 +110,7 @@ class OutputFormatter:
                         "driver": {
                             "name": "Proactive Security Orchestrator",
                             "version": "1.0.0",
-                            "informationUri": "",
+                            "informationUri": "https://github.com/ghifiardi/proactive-security-orchestrator",
                             "rules": [],
                         }
                     },
