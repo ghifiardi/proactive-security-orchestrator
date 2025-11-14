@@ -86,7 +86,7 @@ jobs:
       - name: Run security scan
         working-directory: ${{ env.WORKDIR }}
         run: |
-          python -m src.cli scan . --format sarif --output findings.sarif --config "$CONFIG_PATH" || true
+          security-scan scan . --format sarif --output findings.sarif --config "$CONFIG_PATH" || true
 
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
