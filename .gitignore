@@ -45,6 +45,7 @@ coverage.xml
 .hypothesis/
 
 # Output files
+!contracts/child_agent_schema.json
 *.json
 *.sarif
 *.html
