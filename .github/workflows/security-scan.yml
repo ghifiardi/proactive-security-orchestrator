@@ -62,19 +62,31 @@ jobs:
             echo "CONFIG_PATH=${GITHUB_WORKSPACE}/orchestrator-src/config" >> $GITHUB_ENV
           fi
 
+      - name: Determine install strategy
+        run: |
+          if [ "${{ github.repository }}" = "ghifiardi/proactive-security-orchestrator" ] && { [ -f setup.py ] || [ -f pyproject.toml ]; }; then
+            echo "INSTALL_FROM_WORKSPACE=true" >> $GITHUB_ENV
+            echo "Detected packaging metadata. Using workspace install."
+          else
+            echo "INSTALL_FROM_WORKSPACE=false" >> $GITHUB_ENV
+            echo "No packaging metadata detected. Installing from git."
+          fi
+
       - name: Install orchestrator CLI
         run: |
-          if [ "${{ github.repository }}" = "ghifiardi/proactive-security-orchestrator" ]; then
+          if [ "${INSTALL_FROM_WORKSPACE:-false}" = "true" ]; then
+            echo "Installing orchestrator from current workspace..."
             pip install -r requirements.txt
             pip install -e .
           else
+            echo "Installing orchestrator from ghifiardi/proactive-security-orchestrator@main..."
             pip install git+https://github.com/ghifiardi/proactive-security-orchestrator.git@main
           fi
 
       - name: Run security scan
         working-directory: ${{ env.WORKDIR }}
         run: |
-          security-scan scan . --format sarif --output findings.sarif --config "$CONFIG_PATH" || true
+          python -m src.cli scan . --format sarif --output findings.sarif --config "$CONFIG_PATH" || true
 
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
