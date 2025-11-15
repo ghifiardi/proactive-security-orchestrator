@@ -176,15 +176,41 @@ This file logs each implementation step, maintaining **≤20 lines per Langkah**
 
 ---
 
+## Langkah 13 -- Stabilize Security Scan Workflow
+
+- **Files diubah**: `.github/workflows/security-scan.yml`
+- **Inti perubahan**:
+  - ✅ Exported `PYTHONPATH=$PWD/src` to ensure CLI import resolution.
+  - ✅ Simplified install: pin `rich` range, then install orchestrator from GitHub `main`.
+  - ✅ Updated CLI invocation to requested multiline form with explicit config flag.
+  - ✅ Ensured SARIF + artifact uploads run on both success and failure via latest action versions.
+- **Hasil uji cepat**: `actionlint .github/workflows/security-scan.yml` passes; command mirrors provided snippet ✅
+- **Dampak ke Langkah berikutnya**: Workflow ready for rerun; no additional code changes required.
+- **Catatan risiko/temuan**: Installing from `main` ignores local PR changes—acceptable for reusable workflow but document for contributors.
+
+---
+
+## Langkah 14 -- Workflow Refresh Touch-up
+
+- **Files diubah**: `.github/workflows/security-scan.yml`
+- **Inti perubahan**:
+  - ✅ Added refresh comment at top of workflow to force GitHub Actions to load the latest version.
+  - ✅ No logic modifications; purely metadata to create a new commit snapshot.
+- **Hasil uji cepat**: YAML remains valid (comment-only change); ready for push.
+- **Dampak ke Langkah berikutnya**: New workflow runs triggered from this commit will use updated instructions.
+- **Catatan risiko/temuan**: Ensure future contributors retain comment or update it when touching the workflow to keep history clear.
+
+---
+
 ## Summary
 
-**All 12 Langkah Complete ✅**
+**All 14 Langkah Complete ✅**
 
 - **Test Coverage**: 84% (exceeds 80% target)
 - **Functionality**: All features implemented (orchestrator, child agents, formatters, CLI)
 - **Error Handling**: Graceful degradation if tool fails
 - **Output Formats**: JSON, SARIF, HTML all working
-- **CI/CD**: GitHub Actions + Docker ready
+- **CI/CD**: GitHub Actions + Docker + workflow stabilization/refresh done
 - **Documentation**: README, ARCHITECTURE.md complete
 
-**Next Steps**: Deploy to production or integrate into existing codebase.
+**Next Steps**: Push changes to trigger updated workflow run; monitor GitHub Actions output for confirmation.

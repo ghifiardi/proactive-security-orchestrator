@@ -1,4 +1,5 @@
 name: Security Scan
+# Refresh marker (2025-11-15): touch file to ensure GitHub Actions loads latest workflow changes.
 
 on:
   workflow_call:
@@ -39,6 +40,9 @@ jobs:
           ref: main
           path: orchestrator-src
 
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -62,44 +66,32 @@ jobs:
             echo "CONFIG_PATH=${GITHUB_WORKSPACE}/orchestrator-src/config" >> $GITHUB_ENV
           fi
 
-      - name: Determine install strategy
-        run: |
-          if [ "${{ github.repository }}" = "ghifiardi/proactive-security-orchestrator" ] && { [ -f setup.py ] || [ -f pyproject.toml ]; }; then
-            echo "INSTALL_FROM_WORKSPACE=true" >> $GITHUB_ENV
-            echo "Detected packaging metadata. Using workspace install."
-          else
-            echo "INSTALL_FROM_WORKSPACE=false" >> $GITHUB_ENV
-            echo "No packaging metadata detected. Installing from git."
-          fi
-
       - name: Install orchestrator CLI
         run: |
-          if [ "${INSTALL_FROM_WORKSPACE:-false}" = "true" ]; then
-            echo "Installing orchestrator from current workspace..."
-            pip install -r requirements.txt
-            pip install -e .
-          else
-            echo "Installing orchestrator from ghifiardi/proactive-security-orchestrator@main..."
-            pip install git+https://github.com/ghifiardi/proactive-security-orchestrator.git@main
-          fi
+          pip install "rich>=13.5,<14"
+          pip install git+https://github.com/ghifiardi/proactive-security-orchestrator.git@main
 
       - name: Run security scan
         working-directory: ${{ env.WORKDIR }}
         run: |
-          security-scan scan . --format sarif --output findings.sarif --config "$CONFIG_PATH" || true
+          security-scan scan . \
+            --format sarif \
+            --output findings.sarif \
+            --config "$CONFIG_PATH" || true
 
       - name: Upload SARIF to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: success() || failure()
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: findings.sarif
 
       - name: Upload findings as artifact
+        if: success() || failure()
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: security-findings
+          name: scan-results
           path: findings.sarif
+          if-no-files-found: warn
 
   test:
     runs-on: ubuntu-latest
