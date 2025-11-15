@@ -8,8 +8,8 @@ import typer
 from rich.console import Console
 from rich.logging import RichHandler
 
-from src.formatters.output_formatter import OutputFormatter
-from src.security_orchestrator import SecurityScanner
+from proactive_security_orchestrator.formatters.output_formatter import OutputFormatter
+from proactive_security_orchestrator.security_orchestrator import SecurityScanner
 
 # Configure logging
 logging.basicConfig(
@@ -122,7 +122,7 @@ def scan(
 @app.command()
 def version():
     """Show version information."""
-    from src import __version__
+    from proactive_security_orchestrator import __version__
 
     console.print(f"Proactive Security Orchestrator v{__version__}")
 

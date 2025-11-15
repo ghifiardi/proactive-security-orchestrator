@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.tools.semgrep_analyzer import SemgrepAnalyzer
+from proactive_security_orchestrator.tools.semgrep_analyzer import SemgrepAnalyzer
 
 
 def test_analyze_success(config_dir):

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.tools.gitleaks_scanner import GitleaksScanner
+from proactive_security_orchestrator.tools.gitleaks_scanner import GitleaksScanner
 
 
 def test_scan_success(config_dir):

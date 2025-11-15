@@ -79,8 +79,8 @@ SECRET = "password123"
 
 @pytest.fixture
 def schema_path() -> Path:
-    """Path to JSON schema file."""
-    project_root = Path(__file__).parent.parent
+    """Path to JSON schema file bundled with the package."""
+    project_root = Path(__file__).parent.parent / "src" / "proactive_security_orchestrator"
     return project_root / "contracts" / "child_agent_schema.json"
 
 

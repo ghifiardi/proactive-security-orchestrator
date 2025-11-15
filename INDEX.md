@@ -306,9 +306,9 @@ pytest --cov=src --cov-report=html
 ### Run CLI
 
 ```bash
-python -m src.cli scan /repo --format json --output findings.json
-python -m src.cli scan /repo --format sarif --output findings.sarif
-python -m src.cli scan /repo --format html --output dashboard.html
+python -m proactive_security_orchestrator.cli scan /repo --format json --output findings.json
+python -m proactive_security_orchestrator.cli scan /repo --format sarif --output findings.sarif
+python -m proactive_security_orchestrator.cli scan /repo --format html --output dashboard.html
 ```
 
 ---

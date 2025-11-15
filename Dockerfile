@@ -34,7 +34,7 @@ RUN pip install --no-cache-dir -e .
 RUN semgrep --version && gitleaks version
 
 # Set entrypoint
-ENTRYPOINT ["python", "-m", "src.cli"]
+ENTRYPOINT ["python", "-m", "proactive_security_orchestrator.cli"]
 
 # Default command
 CMD ["--help"]

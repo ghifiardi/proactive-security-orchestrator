@@ -34,13 +34,13 @@ pytest tests/ -v --cov=src
 
 ```bash
 # Scan a repository for vulnerabilities and secrets
-python -m src.cli scan /path/to/repo --format json --output findings.json
+python -m proactive_security_orchestrator.cli scan /path/to/repo --format json --output findings.json
 
 # View results
 cat findings.json | python -m json.tool | less
 
 # Or generate HTML dashboard
-python -m src.cli scan /path/to/repo --format html --output dashboard.html
+python -m proactive_security_orchestrator.cli scan /path/to/repo --format html --output dashboard.html
 open dashboard.html
 ```
 
@@ -308,7 +308,7 @@ xdg-open htmlcov/index.html  # Linux
 ### Example 1: Scan a Repository (JSON Output)
 
 ```bash
-python -m src.cli scan ~/my-project --format json --output findings.json
+python -m proactive_security_orchestrator.cli scan ~/my-project --format json --output findings.json
 
 # View findings
 cat findings.json | python -m json.tool | head -50
@@ -317,7 +317,7 @@ cat findings.json | python -m json.tool | head -50
 ### Example 2: Generate SARIF for GitHub Code Scanning
 
 ```bash
-python -m src.cli scan ~/my-project --format sarif --output findings.sarif
+python -m proactive_security_orchestrator.cli scan ~/my-project --format sarif --output findings.sarif
 
 # Upload to GitHub (in GitHub Actions workflow)
 # (see .github/workflows/security-scan.yml)
@@ -326,7 +326,7 @@ python -m src.cli scan ~/my-project --format sarif --output findings.sarif
 ### Example 3: Generate HTML Dashboard
 
 ```bash
-python -m src.cli scan ~/my-project --format html --output dashboard.html
+python -m proactive_security_orchestrator.cli scan ~/my-project --format html --output dashboard.html
 
 # Open in browser
 open dashboard.html
@@ -463,7 +463,7 @@ self.semgrep = SemgrepAnalyzer(config_dir, timeout=120)
 self.gitleaks = GitleaksScanner(config_dir, timeout=120)
 
 # OR scan subdirectory
-python -m src.cli scan /path/to/repo/src --format json
+python -m proactive_security_orchestrator.cli scan /path/to/repo/src --format json
 ```
 
 ### Issue: False positives in findings
@@ -518,7 +518,7 @@ pytest --cov=src --cov-report=term-missing tests/
 
 ```bash
 # (Optional) Add to .git/hooks/pre-commit
-python -m src.cli scan . --format json > /tmp/findings.json
+python -m proactive_security_orchestrator.cli scan . --format json > /tmp/findings.json
 # Fail if critical findings detected
 ```
 
@@ -577,7 +577,7 @@ This orchestrator provides:
 Ready to scan? 🚀
 
 ```bash
-python -m src.cli scan /path/to/repo --format json --output findings.json
+python -m proactive_security_orchestrator.cli scan /path/to/repo --format json --output findings.json
 ```
 
 Questions? See `.agents/research.md`, `.agents/plan.md`, `.agents/progress.md`, or `ARCHITECTURE.md`.

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.security_orchestrator import SecurityScanner
+from proactive_security_orchestrator.security_orchestrator import SecurityScanner
 
 
 def test_scan_merged_findings(config_dir, sample_findings, temp_repo):

@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.validators.finding_validator import FindingValidator
+from proactive_security_orchestrator.validators.finding_validator import FindingValidator
 
 
 def test_validate_valid_finding(sample_finding, schema_path):

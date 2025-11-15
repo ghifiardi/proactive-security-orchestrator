@@ -5,9 +5,9 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List
 
-from src.tools.gitleaks_scanner import GitleaksScanner
-from src.tools.semgrep_analyzer import SemgrepAnalyzer
-from src.validators.finding_validator import FindingValidator
+from proactive_security_orchestrator.tools.gitleaks_scanner import GitleaksScanner
+from proactive_security_orchestrator.tools.semgrep_analyzer import SemgrepAnalyzer
+from proactive_security_orchestrator.validators.finding_validator import FindingValidator
 
 logger = logging.getLogger(__name__)
 

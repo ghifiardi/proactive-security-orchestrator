@@ -300,7 +300,7 @@ xdg-open htmlcov/index.html  # Linux
 ### 6.2 Test on Real Repository
 
 ```bash
-python -m src.cli scan ~/my-project --format json --output findings.json
+python -m proactive_security_orchestrator.cli scan ~/my-project --format json --output findings.json
 
 # View findings
 cat findings.json | python -m json.tool | head -50
@@ -312,13 +312,13 @@ cat findings.json | python -m json.tool | head -50
 
 ```bash
 # JSON output
-python -m src.cli scan ~/my-project --format json --output findings.json
+python -m proactive_security_orchestrator.cli scan ~/my-project --format json --output findings.json
 
 # SARIF output (for GitHub)
-python -m src.cli scan ~/my-project --format sarif --output findings.sarif
+python -m proactive_security_orchestrator.cli scan ~/my-project --format sarif --output findings.sarif
 
 # HTML dashboard
-python -m src.cli scan ~/my-project --format html --output dashboard.html
+python -m proactive_security_orchestrator.cli scan ~/my-project --format html --output dashboard.html
 open dashboard.html
 ```
 
@@ -462,9 +462,9 @@ pytest tests/test_X.py::test_foo -v
 pytest --cov=src --cov-report=html
 
 # CLI
-python -m src.cli scan /repo --format json --output findings.json
-python -m src.cli scan /repo --format sarif --output findings.sarif
-python -m src.cli scan /repo --format html --output dashboard.html
+python -m proactive_security_orchestrator.cli scan /repo --format json --output findings.json
+python -m proactive_security_orchestrator.cli scan /repo --format sarif --output findings.sarif
+python -m proactive_security_orchestrator.cli scan /repo --format html --output dashboard.html
 
 # Docker
 docker build -t security-orchestrator .

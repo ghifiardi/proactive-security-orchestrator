@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.security_orchestrator import SecurityScanner
+from proactive_security_orchestrator.security_orchestrator import SecurityScanner
 
 
 @pytest.mark.integration

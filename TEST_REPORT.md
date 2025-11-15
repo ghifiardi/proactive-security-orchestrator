@@ -102,7 +102,7 @@ python3.11 -m pip install -e .
 python3.11 -m pip install pytest pytest-cov pytest-asyncio
 
 # 4. Verify installation
-python3.11 -m src.cli --help
+python3.11 -m proactive_security_orchestrator.cli --help
 semgrep --version
 gitleaks version
 ```
@@ -350,7 +350,7 @@ Status: Active development codebase
 #### 1. JSON Format Scan
 
 ```bash
-$ python3.11 -m src.cli scan \
+$ python3.11 -m proactive_security_orchestrator.cli scan \
   "/Users/raditio.ghifiardigmail.com/Downloads/ai-driven-soc" \
   --format json \
   --output test_findings.json \
@@ -384,7 +384,7 @@ Saving JSON output to: test_findings.json
 #### 2. HTML Format Scan
 
 ```bash
-$ python3.11 -m src.cli scan \
+$ python3.11 -m proactive_security_orchestrator.cli scan \
   "/Users/raditio.ghifiardigmail.com/Downloads/ai-driven-soc" \
   --format html \
   --output test_dashboard.html \
@@ -406,7 +406,7 @@ Saving HTML output to: test_dashboard.html
 #### 3. SARIF Format Scan
 
 ```bash
-$ python3.11 -m src.cli scan \
+$ python3.11 -m proactive_security_orchestrator.cli scan \
   "/Users/raditio.ghifiardigmail.com/Downloads/ai-driven-soc" \
   --format sarif \
   --output test_findings.sarif \
@@ -805,12 +805,12 @@ pytest tests/test_cli.py::test_cli_help -v
 pytest tests/test_integration.py -v -m integration
 
 # Run CLI scan
-python3.11 -m src.cli scan /path/to/repo --format json --output findings.json
+python3.11 -m proactive_security_orchestrator.cli scan /path/to/repo --format json --output findings.json
 
 # Generate all formats
-python3.11 -m src.cli scan /path/to/repo --format json --output findings.json
-python3.11 -m src.cli scan /path/to/repo --format sarif --output findings.sarif
-python3.11 -m src.cli scan /path/to/repo --format html --output dashboard.html
+python3.11 -m proactive_security_orchestrator.cli scan /path/to/repo --format json --output findings.json
+python3.11 -m proactive_security_orchestrator.cli scan /path/to/repo --format sarif --output findings.sarif
+python3.11 -m proactive_security_orchestrator.cli scan /path/to/repo --format html --output dashboard.html
 ```
 
 ### B. Troubleshooting

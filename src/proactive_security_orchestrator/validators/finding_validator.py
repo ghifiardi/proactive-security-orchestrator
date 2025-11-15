@@ -20,9 +20,9 @@ class FindingValidator:
             schema_path: Path to JSON schema file. Defaults to contracts/child_agent_schema.json
         """
         if schema_path is None:
-            # Default to contracts directory relative to project root
-            project_root = Path(__file__).parent.parent.parent
-            schema_path = project_root / "contracts" / "child_agent_schema.json"
+            # Default to contracts directory bundled within the package
+            package_root = Path(__file__).resolve().parent.parent
+            schema_path = package_root / "contracts" / "child_agent_schema.json"
 
         self.schema_path = schema_path
         with open(schema_path, "r", encoding="utf-8") as f:

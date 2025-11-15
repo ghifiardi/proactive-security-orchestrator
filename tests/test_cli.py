@@ -6,7 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from src.cli import app
+from proactive_security_orchestrator import __version__
+from proactive_security_orchestrator.cli import app
 
 runner = CliRunner()
 
@@ -24,7 +25,7 @@ def test_cli_version():
     result = runner.invoke(app, ["version"])
 
     assert result.exit_code == 0
-    assert "v1.0.0" in result.stdout
+    assert f"v{__version__}" in result.stdout
 
 
 def test_cli_scan_invalid_format(tmp_path):
@@ -47,7 +48,7 @@ def test_cli_scan_nonexistent_repo():
     assert "does not exist" in result.stdout
 
 
-@patch("src.cli.SecurityScanner")
+@patch("proactive_security_orchestrator.cli.SecurityScanner")
 def test_cli_scan_success(mock_scanner_class, tmp_path):
     """Test successful CLI scan."""
     repo = tmp_path / "test_repo"
@@ -67,7 +68,7 @@ def test_cli_scan_success(mock_scanner_class, tmp_path):
     assert output_file.exists()
 
 
-@patch("src.cli.SecurityScanner")
+@patch("proactive_security_orchestrator.cli.SecurityScanner")
 def test_cli_scan_with_findings(mock_scanner_class, tmp_path, sample_finding):
     """Test CLI scan with findings."""
     repo = tmp_path / "test_repo"

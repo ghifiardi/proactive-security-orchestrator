@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from src.formatters.output_formatter import OutputFormatter
+from proactive_security_orchestrator.formatters.output_formatter import OutputFormatter
 
 
 def test_to_json(sample_findings):
