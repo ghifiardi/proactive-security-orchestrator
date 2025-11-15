@@ -202,15 +202,24 @@ This file logs each implementation step, maintaining **≤20 lines per Langkah**
 
 ---
 
+## Langkah 15 -- Replace Workflow with User-Supplied Version
+
+- **Files diubah**: `.github/workflows/security-scan.yml`
+- **Inti perubahan**:
+  - ✅ Overwrote workflow with provided single-job pipeline (push/PR/dispatch triggers only).
+  - ✅ Added explicit Semgrep (1.43.1) pip install and Gitleaks binary download steps.
+  - ✅ Install orchestrator CLI directly from GitHub main without PYTHONPATH manipulation.
+  - ✅ Scan step now uses `continue-on-error` and creates empty SARIF if missing; upload steps simplified accordingly.
+- **Hasil uji cepat**: YAML saved; pending GitHub Actions run for verification (manual trigger required).
+- **Dampak ke Langkah berikutnya**: Workflow ready for push so new run uses simplified structure.
+- **Catatan risiko/temuan**: Former workflow_call/test job functionality removed; document for downstream consumers.
+
+---
+
 ## Summary
 
-**All 14 Langkah Complete ✅**
+**All 15 Langkah Complete ✅**
 
 - **Test Coverage**: 84% (exceeds 80% target)
-- **Functionality**: All features implemented (orchestrator, child agents, formatters, CLI)
-- **Error Handling**: Graceful degradation if tool fails
-- **Output Formats**: JSON, SARIF, HTML all working
-- **CI/CD**: GitHub Actions + Docker + workflow stabilization/refresh done
-- **Documentation**: README, ARCHITECTURE.md complete
-
-**Next Steps**: Push changes to trigger updated workflow run; monitor GitHub Actions output for confirmation.
+- **Functionality**: Orchestrator + workflow integrated; latest workflow version matches user spec.
+- **Next Steps**: Push changes and trigger new GitHub Actions run to validate new pipeline end-to-end.

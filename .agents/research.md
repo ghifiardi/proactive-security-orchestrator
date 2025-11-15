@@ -1,33 +1,40 @@
 # Scope
-- Target change/bug/feature: Force GitHub Actions to pick up the latest security workflow by touching `.github/workflows/security-scan.yml` without altering logic.
-- Components/Services: `.github/workflows/security-scan.yml` (workflow definition used by upstream repos).
+- Target change/bug/feature: Replace existing security scan workflow with provided clean version that installs orchestrator from GitHub and ensures SARIF handling.
+- Components/Services: `.github/workflows/security-scan.yml` (entire job spec), orchestrator CLI entrypoint (referenced indirectly).
 
 # Peta File & Simbol (path + [Lx-Ly] + 1-line role)
-- `.github/workflows/security-scan.yml [L1-L133]` – defines the security scan workflow, including install, scan, and upload steps.
+- `.github/workflows/security-scan.yml [L1-L133]` – current workflow includes workspace install logic, config path detection, multi-job setup.
+- `src/cli.py` (indirect) – invoked by `security-scan` CLI; confirms expected command.
 
 # Alur Eksekusi end-to-end (linked to lines)
-1. Workflow triggers via push/PR/dispatch (`security-scan.yml [L3-L16]`).
-2. Job `security-scan` runs steps to install tools, run scanner, upload SARIF/artifacts ([L21-L103]).
-3. External repos consume workflow via `workflow_call`; they require refreshed YAML to apply changes.
+1. Workflow triggers on push/PR/workflow_call ([L3-L16]) and defines jobs security-scan + test ([L21-L125]).
+2. security-scan job installs Semgrep/Gitleaks, installs orchestrator with conditional logic ([L47-L85]), runs CLI, uploads SARIF/artifacts ([L86-L103]).
+3. test job runs pytest for canonical repo ([L104-L134]).
 
 # Tes & Observabilitas (tests, log, how-to-run)
-- No automated tests for comments; verification is by pushing commit and watching GitHub use updated workflow (new run should show `upload-sarif@v4` etc.).
-- Optional lint: `actionlint .github/workflows/security-scan.yml` to confirm syntax unaffected.
+- After modifying workflow, run `actionlint .github/workflows/security-scan.yml` locally if available.
+- Push commit and trigger workflow via GitHub Actions UI `Run workflow` to validate.
+- Observe run logs for `security-scan scan` command and presence of SARIF upload.
 
 # Risiko & Asumsi
-- Workflow logic must remain unchanged; only harmless metadata/comment addition allowed.
-- Assume touching file (comment) is sufficient to force GitHub to reload definition.
-- No CI run locally; relies on GitHub to execute after commit.
+- Replacing workflow removes workflow_call/test job features; ensure user accepts simplified triggers.
+- Hardcoding Semgrep version 1.43.1 may conflict with orchestrator requirements; rely on user-provided spec.
+- CLI install from GitHub main may not include local modifications; assumed acceptable.
+- Step uses static config path `security-scan-config.yml`; repo must contain file or accept missing (user-provided snippet shows literal string).
 
 # Bukti (3–5 mini snippets only)
 ```21:103:.github/workflows/security-scan.yml
-# Existing workflow already includes PYTHONPATH export, pinned rich, v4 uploads.
+Existing workflow has multi-job structure and config detection to support external repos.
 ```
-```1:20:.github/workflows/security-scan.yml
-name: Security Scan
-on:
-  workflow_call: ...
+```104:134:.github/workflows/security-scan.yml
+Secondary test job runs pytest for canonical repo.
 ```
-```0:0:GitHub UI
-Workflow run still shows v3 upload → indicates old commit snapshot in effect.
+```0:0:USER_SNIPPET
+Provided YAML defines new triggers, steps, installs, and SARIF upload requirements.
+```
+```27:118:src/cli.py
+Current CLI expects config dir argument; new workflow passes `--config "security-scan-config.yml"`.
+```
+```0:0:LOG_HISTORY
+Prior runs show ModuleNotFoundError and rich conflicts due to old workflow state.
 ```
