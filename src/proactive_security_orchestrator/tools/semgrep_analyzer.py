@@ -34,19 +34,25 @@ class SemgrepAnalyzer:
         """
         repo_path = Path(repo_path)
 
-        if not self.rules_path.exists():
-            logger.warning(f"Semgrep rules not found at {self.rules_path}. Skipping.")
-            return []
-
         try:
             # Run semgrep with JSON output
-            cmd = [
-                "semgrep",
-                "--config",
-                str(self.rules_path),
-                "--json",
-                str(repo_path),
-            ]
+            # Use custom rules if available, otherwise use Semgrep's default security rules
+            if self.rules_path.exists():
+                cmd = [
+                    "semgrep",
+                    "--config",
+                    str(self.rules_path),
+                    "--json",
+                    str(repo_path),
+                ]
+            else:
+                logger.info(f"Semgrep rules not found at {self.rules_path}. Using default security rules.")
+                cmd = [
+                    "semgrep",
+                    "--config", "auto",  # Use Semgrep's auto-config (security-focused rules)
+                    "--json",
+                    str(repo_path),
+                ]
 
             logger.debug(f"Running: {' '.join(cmd)}")
 

@@ -9,7 +9,7 @@ long_description = readme_file.read_text() if readme_file.exists() else ""
 
 setup(
     name="proactive-security-orchestrator",
-    version="1.0.3",
+    version="1.0.4",
     description="Security orchestration platform integrating Semgrep and Gitleaks",
     long_description=long_description,
     long_description_content_type="text/markdown",
