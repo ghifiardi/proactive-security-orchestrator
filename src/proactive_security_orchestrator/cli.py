@@ -32,6 +32,7 @@ def scan(
     config_dir: Path = typer.Option("config", "--config", "-c", help="Configuration directory"),
     timeout: int = typer.Option(60, "--timeout", "-t", help="Timeout in seconds for each tool"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose logging"),
+    fail_on_critical: bool = typer.Option(True, "--fail-on-critical/--no-fail-on-critical", help="Exit with code 1 if critical findings are detected (default: True)"),
 ):
     """Scan repository for security vulnerabilities and secrets.
 
@@ -102,10 +103,14 @@ def scan(
                 formatter.save_to_file(findings, format.lower(), default_output)
                 console.print(f"[green]✓ Output saved to {default_output}[/green]")
 
-        # Exit with non-zero if critical findings
+        # Exit with non-zero if critical findings (unless --no-fail-on-critical is set)
         if any(f.get("severity") == "critical" for f in findings):
             console.print("[red]⚠ Critical findings detected![/red]")
-            sys.exit(1)
+            if fail_on_critical:
+                sys.exit(1)
+            else:
+                console.print("[yellow]Continuing with exit code 0 (--no-fail-on-critical enabled)[/yellow]")
+                sys.exit(0)
         elif findings:
             sys.exit(0)
         else:
