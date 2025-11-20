@@ -116,8 +116,17 @@ class SemgrepAnalyzer:
             path = semgrep_result.get("path", "")
             start = semgrep_result.get("start", {})
             end = semgrep_result.get("end", {})
+            extra = semgrep_result.get("extra", {})
+            
+            # Extract message - prefer Semgrep's message, fallback to metadata description
             message = semgrep_result.get("message", "")
-            severity = semgrep_result.get("extra", {}).get("severity", "medium")
+            if not message and "metadata" in extra:
+                message = extra["metadata"].get("description", "")
+            if not message:
+                # Create readable message from rule ID
+                message = self._format_rule_name(check_id)
+            
+            severity = extra.get("severity", "medium")
 
             start_line = start.get("line", 0)
             end_line = end.get("line", start_line)
@@ -136,19 +145,33 @@ class SemgrepAnalyzer:
             }
             mapped_severity = severity_map.get(severity.upper(), "medium")
 
-            # Get code snippet (first 2 lines max)
+            # Get code snippet (first 3 lines max)
             code_snippet = ""
-            if "extra" in semgrep_result and "lines" in semgrep_result["extra"]:
-                lines = semgrep_result["extra"]["lines"].split("\n")[:2]
+            if "lines" in extra:
+                lines = extra["lines"].split("\n")[:3]
                 code_snippet = "\n".join(lines).strip()
 
+            # Extract remediation guidance
+            remediation = self._extract_remediation(extra, check_id)
+            
+            # Extract why_relevant from metadata
+            why_relevant = ""
+            if "metadata" in extra:
+                why_relevant = extra["metadata"].get("cwe", "")
+                if why_relevant:
+                    why_relevant = f"CWE-{why_relevant}: {extra['metadata'].get('cwe_description', 'Security vulnerability detected')}"
+                else:
+                    why_relevant = extra["metadata"].get("description", f"Semgrep rule {check_id} detected this security issue")
+            else:
+                why_relevant = f"Semgrep security rule detected: {check_id}"
+
             finding = {
-                "finding": message or check_id,
+                "finding": message,
                 "evidence": [
                     {
                         "path": path,
                         "lines": lines_str,
-                        "why_relevant": f"Semgrep rule {check_id} detected this issue",
+                        "why_relevant": why_relevant,
                         "code_snippet": code_snippet,
                     }
                 ],
@@ -156,7 +179,7 @@ class SemgrepAnalyzer:
                 "tool": "semgrep",
                 "severity": mapped_severity,
                 "rule_id": check_id,
-                "remediation": f"Review and fix according to rule {check_id}",
+                "remediation": remediation,
             }
 
             return finding
@@ -164,4 +187,71 @@ class SemgrepAnalyzer:
         except (KeyError, AttributeError) as e:
             logger.warning(f"Failed to convert Semgrep result: {e}")
             return None
+
+    def _format_rule_name(self, rule_id: str) -> str:
+        """Convert technical rule ID to human-readable name.
+        
+        Args:
+            rule_id: Semgrep rule ID like "python.lang.security.deserialization.pickle.avoid-pickle"
+            
+        Returns:
+            Human-readable rule name
+        """
+        # Split by dots and capitalize
+        parts = rule_id.split(".")
+        if len(parts) >= 2:
+            # Get the last meaningful parts
+            category = parts[-2] if len(parts) >= 2 else ""
+            rule_name = parts[-1].replace("-", " ").title()
+            
+            # Map common categories
+            category_map = {
+                "security": "Security",
+                "secrets": "Secret Detection",
+                "deserialization": "Deserialization",
+                "xss": "XSS",
+                "injection": "Injection",
+            }
+            category = category_map.get(category, category.title())
+            
+            return f"{category}: {rule_name}"
+        return rule_id.replace(".", " ").replace("-", " ").title()
+
+    def _extract_remediation(self, extra: Dict[str, Any], check_id: str) -> str:
+        """Extract remediation guidance from Semgrep metadata.
+        
+        Args:
+            extra: Semgrep extra metadata
+            check_id: Rule ID
+            
+        Returns:
+            Remediation guidance text
+        """
+        # Try to get remediation from metadata
+        if "metadata" in extra:
+            metadata = extra["metadata"]
+            
+            # Check for remediation field
+            if "remediation" in metadata:
+                return metadata["remediation"]
+            
+            # Check for owasp or cwe descriptions
+            if "owasp" in metadata:
+                return f"Follow OWASP guidelines: {metadata.get('owasp', '')}"
+            
+            # Generate based on rule type
+            if "deserialization" in check_id.lower() or "pickle" in check_id.lower():
+                return "Avoid using pickle for deserializing untrusted data. Use JSON or other safe serialization formats. If pickle is necessary, ensure data comes from trusted sources only."
+            
+            if "xss" in check_id.lower() or "jinja2" in check_id.lower():
+                return "Use Flask's auto-escaping or manually escape user input before rendering in templates. Never render user input directly without escaping."
+            
+            if "secrets" in check_id.lower() or "private-key" in check_id.lower():
+                return "Remove hardcoded secrets, API keys, or private keys from code. Use environment variables, secret management systems, or secure vaults. Rotate any exposed credentials immediately."
+            
+            if "injection" in check_id.lower():
+                return "Use parameterized queries or prepared statements. Never concatenate user input directly into queries or commands."
+        
+        # Default generic remediation
+        return f"Review and fix the security issue identified by rule: {check_id}. Refer to security best practices for your language and framework."
 

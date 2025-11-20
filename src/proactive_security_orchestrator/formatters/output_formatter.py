@@ -5,6 +5,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
+from proactive_security_orchestrator import __version__
+
 # Template for HTML dashboard
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -109,7 +111,7 @@ class OutputFormatter:
                     "tool": {
                         "driver": {
                             "name": "Proactive Security Orchestrator",
-                            "version": "1.0.0",
+                            "version": __version__,
                             "informationUri": "https://github.com/ghifiardi/proactive-security-orchestrator",
                             "rules": [],
                         }
@@ -136,18 +138,45 @@ class OutputFormatter:
             rule_id = finding.get("rule_id", "unknown")
             severity = finding.get("severity", "medium").lower()
             sarif_severity = severity_map.get(severity, "warning")
+            
+            # Get human-readable finding message
+            finding_message = finding.get("finding", "")
+            if not finding_message or finding_message == rule_id:
+                # Fallback: create readable name from rule_id
+                finding_message = rule_id.split(".")[-1].replace("-", " ").title()
 
             # Create rule entry if not exists
             if rule_id not in rules_dict:
+                remediation = finding.get("remediation", "")
+                if not remediation:
+                    remediation = f"Review and fix the security issue: {finding_message}"
+                
+                # Create better rule name from rule_id
+                rule_name = finding_message
+                if rule_name == rule_id or not rule_name:
+                    # Parse rule_id to create readable name
+                    parts = rule_id.split(".")
+                    if len(parts) >= 2:
+                        rule_name = parts[-1].replace("-", " ").title()
+                    else:
+                        rule_name = rule_id
+                
                 rules_dict[rule_id] = {
                     "id": rule_id,
-                    "name": finding.get("finding", rule_id),
-                    "shortDescription": {"text": finding.get("finding", "")},
+                    "name": rule_name,
+                    "shortDescription": {
+                        "text": finding_message
+                    },
+                    "fullDescription": {
+                        "text": finding_message
+                    },
                     "help": {
-                        "text": finding.get("remediation", ""),
+                        "text": remediation,
+                        "markdown": remediation
                     },
                     "properties": {
                         "tags": [finding.get("tool", "unknown"), severity],
+                        "precision": "high" if finding.get("confidence", 0.5) > 0.7 else "medium",
                     },
                 }
 
@@ -156,20 +185,44 @@ class OutputFormatter:
             for evidence in evidence_list:
                 path = evidence.get("path", "")
                 lines_str = evidence.get("lines", "")
+                why_relevant = evidence.get("why_relevant", "")
+                code_snippet = evidence.get("code_snippet", "")
 
                 # Parse line numbers
                 line_num = 0
+                end_line_num = None
                 if lines_str:
                     try:
-                        line_num = int(lines_str.replace("L", "").split("-")[0])
+                        # Handle "L100" or "L100-L145" format
+                        line_parts = lines_str.replace("L", "").split("-")
+                        line_num = int(line_parts[0])
+                        if len(line_parts) > 1:
+                            end_line_num = int(line_parts[1].replace("L", ""))
                     except (ValueError, AttributeError):
                         pass
+
+                # Build message with context
+                message_text = finding_message
+                if why_relevant and why_relevant != finding_message:
+                    message_text = f"{finding_message}. {why_relevant}"
+
+                # Build region with code snippet if available
+                region = {
+                    "startLine": line_num,
+                }
+                if end_line_num and end_line_num != line_num:
+                    region["endLine"] = end_line_num
+                
+                if code_snippet:
+                    region["snippet"] = {
+                        "text": code_snippet
+                    }
 
                 result = {
                     "ruleId": rule_id,
                     "level": sarif_severity,
                     "message": {
-                        "text": finding.get("finding", ""),
+                        "text": message_text,
                     },
                     "locations": [
                         {
@@ -177,9 +230,7 @@ class OutputFormatter:
                                 "artifactLocation": {
                                     "uri": path,
                                 },
-                                "region": {
-                                    "startLine": line_num,
-                                },
+                                "region": region,
                             },
                         }
                     ],
