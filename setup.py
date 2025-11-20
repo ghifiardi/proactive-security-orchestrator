@@ -9,7 +9,7 @@ long_description = readme_file.read_text() if readme_file.exists() else ""
 
 setup(
     name="proactive-security-orchestrator",
-    version="1.0.5",
+    version="1.0.6",
     description="Security orchestration platform integrating Semgrep and Gitleaks",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -27,6 +27,7 @@ setup(
         "pydantic>=2.0.0",
         "jsonschema>=4.0.0",
         "structlog>=23.2.0",
+        "reportlab>=4.0.0",
     ],
     extras_require={
         "dev": [

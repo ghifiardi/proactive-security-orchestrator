@@ -27,7 +27,7 @@ app = typer.Typer(help="Proactive Security Orchestrator - Unified security scann
 @app.command()
 def scan(
     repo_path: str = typer.Argument(..., help="Path to repository to scan"),
-    format: str = typer.Option("json", "--format", "-f", help="Output format: json, sarif, html"),
+    format: str = typer.Option("json", "--format", "-f", help="Output format: json, sarif, html, pdf"),
     output: Path | None = typer.Option(None, "--output", "-o", help="Output file path (default: stdout for json, file for sarif/html)"),
     config_dir: Path = typer.Option("config", "--config", "-c", help="Configuration directory"),
     timeout: int = typer.Option(60, "--timeout", "-t", help="Timeout in seconds for each tool"),
@@ -39,12 +39,13 @@ def scan(
         $ security-scan /path/to/repo --format json --output findings.json
         $ security-scan /path/to/repo --format sarif --output findings.sarif
         $ security-scan /path/to/repo --format html --output dashboard.html
+        $ security-scan /path/to/repo --format pdf --output report.pdf
     """
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
     # Validate format
-    valid_formats = ["json", "sarif", "html"]
+    valid_formats = ["json", "sarif", "html", "pdf"]
     if format.lower() not in valid_formats:
         console.print(f"[red]Error: Invalid format '{format}'. Must be one of: {', '.join(valid_formats)}[/red]")
         sys.exit(1)
@@ -95,7 +96,7 @@ def scan(
                 json_output = formatter.to_json(findings)
                 console.print(json_output)
             else:
-                # For SARIF/HTML, default to file if output not specified
+                # For SARIF/HTML/PDF, default to file if output not specified
                 default_output = f"findings.{format.lower()}"
                 console.print(f"[yellow]No output file specified. Saving to: {default_output}[/yellow]")
                 formatter.save_to_file(findings, format.lower(), default_output)

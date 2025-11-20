@@ -5,6 +5,17 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
+try:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+    from reportlab.pdfgen import canvas
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
+
 from proactive_security_orchestrator import __version__
 
 # Template for HTML dashboard
@@ -332,6 +343,202 @@ class OutputFormatter:
         return html
 
     @staticmethod
+    def to_pdf(findings: List[Dict[str, Any]]) -> bytes:
+        """Convert findings to PDF format with bullet points and structured layout.
+
+        Args:
+            findings: List of finding dictionaries
+
+        Returns:
+            PDF file as bytes
+
+        Raises:
+            ImportError: If reportlab is not installed
+        """
+        if not REPORTLAB_AVAILABLE:
+            raise ImportError(
+                "reportlab is required for PDF output. Install with: pip install reportlab"
+            )
+
+        from io import BytesIO
+
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.75*inch, bottomMargin=0.75*inch)
+        story = []
+        styles = getSampleStyleSheet()
+
+        # Custom styles
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=24,
+            textColor=colors.HexColor('#1a1a1a'),
+            spaceAfter=30,
+            alignment=1,  # Center
+        )
+
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=16,
+            textColor=colors.HexColor('#2c3e50'),
+            spaceAfter=12,
+            spaceBefore=20,
+        )
+
+        severity_colors = {
+            "critical": colors.HexColor('#d32f2f'),
+            "high": colors.HexColor('#f57c00'),
+            "medium": colors.HexColor('#fbc02d'),
+            "low": colors.HexColor('#1976d2'),
+            "info": colors.HexColor('#616161'),
+        }
+
+        # Title
+        story.append(Paragraph("Security Scan Report", title_style))
+        story.append(Spacer(1, 0.2*inch))
+
+        # Summary section
+        total = len(findings)
+        counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
+        for finding in findings:
+            severity = finding.get("severity", "info").lower()
+            counts[severity] = counts.get(severity, 0) + 1
+
+        summary_data = [
+            ["Total Findings", str(total)],
+            ["Critical", str(counts["critical"])],
+            ["High", str(counts["high"])],
+            ["Medium", str(counts["medium"])],
+            ["Low", str(counts["low"])],
+            ["Info", str(counts["info"])],
+        ]
+
+        summary_table = Table(summary_data, colWidths=[3*inch, 2*inch])
+        summary_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#34495e')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#ecf0f1')),
+            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        story.append(summary_table)
+        story.append(Spacer(1, 0.3*inch))
+
+        # Findings section
+        story.append(Paragraph("Security Findings", heading_style))
+        story.append(Spacer(1, 0.1*inch))
+
+        if not findings:
+            story.append(Paragraph("✓ No security findings detected.", styles['Normal']))
+        else:
+            for idx, finding in enumerate(findings, 1):
+                severity = finding.get("severity", "info").lower()
+                finding_text = finding.get("finding", "Unknown issue")
+                rule_id = finding.get("rule_id", "unknown")
+                tool = finding.get("tool", "unknown")
+                remediation = finding.get("remediation", "")
+
+                # Finding header with severity color
+                severity_color = severity_colors.get(severity, colors.grey)
+                finding_title = f"<b>{idx}. {finding_text}</b>"
+                story.append(Paragraph(finding_title, heading_style))
+                story.append(Spacer(1, 0.05*inch))
+
+                # Metadata bullet points
+                metadata_items = [
+                    f"<b>Severity:</b> {severity.upper()}",
+                    f"<b>Tool:</b> {tool}",
+                    f"<b>Rule ID:</b> {rule_id}",
+                ]
+
+                for item in metadata_items:
+                    story.append(Paragraph(f"• {item}", styles['Normal']))
+                    story.append(Spacer(1, 0.02*inch))
+
+                story.append(Spacer(1, 0.1*inch))
+
+                # Evidence section
+                evidence_list = finding.get("evidence", [])
+                if evidence_list:
+                    story.append(Paragraph("<b>Locations:</b>", styles['Normal']))
+                    story.append(Spacer(1, 0.05*inch))
+
+                    for evidence in evidence_list:
+                        path = evidence.get("path", "")
+                        lines = evidence.get("lines", "")
+                        why = evidence.get("why_relevant", "")
+                        code = evidence.get("code_snippet", "")
+
+                        location_text = f"• <b>File:</b> {path} <b>({lines})</b>"
+                        story.append(Paragraph(location_text, styles['Normal']))
+                        story.append(Spacer(1, 0.02*inch))
+
+                        if why:
+                            story.append(Paragraph(f"  <i>Reason:</i> {why}", styles['Normal']))
+                            story.append(Spacer(1, 0.02*inch))
+
+                        if code:
+                            # Code snippet in monospace
+                            code_style = ParagraphStyle(
+                                'Code',
+                                parent=styles['Normal'],
+                                fontName='Courier',
+                                fontSize=8,
+                                leftIndent=20,
+                                backColor=colors.HexColor('#f5f5f5'),
+                                borderPadding=5,
+                            )
+                            # Escape HTML and format code
+                            code_escaped = code.replace('<', '&lt;').replace('>', '&gt;')
+                            story.append(Paragraph(f"<font face='Courier'>{code_escaped}</font>", code_style))
+                            story.append(Spacer(1, 0.05*inch))
+
+                # Remediation section
+                if remediation:
+                    story.append(Spacer(1, 0.1*inch))
+                    remediation_style = ParagraphStyle(
+                        'Remediation',
+                        parent=styles['Normal'],
+                        leftIndent=20,
+                        backColor=colors.HexColor('#e8f5e9'),
+                        borderPadding=8,
+                        borderColor=colors.HexColor('#4caf50'),
+                        borderWidth=1,
+                    )
+                    story.append(Paragraph(f"<b>Remediation:</b> {remediation}", remediation_style))
+
+                story.append(Spacer(1, 0.2*inch))
+
+                # Add page break if not last finding
+                if idx < len(findings):
+                    story.append(PageBreak())
+
+        # Footer with timestamp
+        story.append(Spacer(1, 0.3*inch))
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        footer_style = ParagraphStyle(
+            'Footer',
+            parent=styles['Normal'],
+            fontSize=8,
+            textColor=colors.grey,
+            alignment=1,  # Center
+        )
+        story.append(Paragraph(
+            f"Generated by Proactive Security Orchestrator v{__version__} on {timestamp}",
+            footer_style
+        ))
+
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        return buffer.getvalue()
+
+    @staticmethod
     def save_to_file(
         findings: List[Dict[str, Any]], format: str, output_path: Path | str
     ) -> None:
@@ -339,7 +546,7 @@ class OutputFormatter:
 
         Args:
             findings: List of finding dictionaries
-            format: Output format ('json', 'sarif', 'html')
+            format: Output format ('json', 'sarif', 'html', 'pdf')
             output_path: Path to output file
         """
         output_path = Path(output_path)
@@ -347,13 +554,20 @@ class OutputFormatter:
         formatter = OutputFormatter()
         if format == "json":
             content = formatter.to_json(findings)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(content, encoding="utf-8")
         elif format == "sarif":
             content = formatter.to_sarif(findings)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(content, encoding="utf-8")
         elif format == "html":
             content = formatter.to_html(findings)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(content, encoding="utf-8")
+        elif format == "pdf":
+            pdf_content = formatter.to_pdf(findings)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_bytes(pdf_content)
         else:
-            raise ValueError(f"Unsupported format: {format}")
-
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(content, encoding="utf-8")
+            raise ValueError(f"Unsupported format: {format}. Supported: json, sarif, html, pdf")
 
